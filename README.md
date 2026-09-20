@@ -21,3 +21,4 @@ são redirecionadas para a API. Por isso precisa rodar com `npm run dev`.
 - `/produtos`, `/produtos/novo`, `/produtos/:id/editar`
 - `/clientes`, `/clientes/novo`, `/clientes/:id/editar`
 - `/tarefas`, `/tarefas/novo`, `/tarefas/:id/editar`
+# AV1_React
