@@ -1,0 +1,45 @@
+/* Estilo mínimo: o foco do trabalho é o React, não o leiaute */
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+}
+
+nav {
+  display: flex;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #eee;
+}
+
+nav a.active {
+  font-weight: bold;
+}
+
+main {
+  padding: 0 24px 24px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 16px;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  max-width: 420px;
+}
+
+.erro {
+  color: #b00020;
+}
