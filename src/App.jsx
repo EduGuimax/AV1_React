@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes } from 'react-router-dom'
 import Home from './components/Home'
 import ProdutosLista from './components/ProdutosLista'
 import ProdutoForm from './components/ProdutoForm'
@@ -9,16 +9,15 @@ import TarefaForm from './components/TarefaForm'
 
 function App() {
   return (
-    <>
+    <div>
       <nav>
-        <NavLink to="/" end>Início</NavLink>
-        <NavLink to="/produtos">Produtos</NavLink>
-        <NavLink to="/clientes">Clientes</NavLink>
-        <NavLink to="/tarefas">Tarefas</NavLink>
+        <Link to="/">Início</Link>
+        <Link to="/produtos">Produtos</Link>
+        <Link to="/clientes">Clientes</Link>
+        <Link to="/tarefas">Tarefas</Link>
       </nav>
 
       <main>
-        {/* Cada Route liga um endereço (path) a um componente (element) */}
         <Routes>
           <Route path="/" element={<Home />} />
 
@@ -33,11 +32,9 @@ function App() {
           <Route path="/tarefas" element={<TarefasLista />} />
           <Route path="/tarefas/novo" element={<TarefaForm />} />
           <Route path="/tarefas/:id/editar" element={<TarefaForm />} />
-
-          <Route path="*" element={<p>Página não encontrada.</p>} />
         </Routes>
       </main>
-    </>
+    </div>
   )
 }
 

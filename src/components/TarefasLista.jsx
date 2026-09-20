@@ -1,73 +1,59 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listar, excluir } from '../api'
 
-export default function TarefasLista() {
-  const [tarefas, setTarefas] = useState(null) // null = ainda carregando
-  const [erro, setErro] = useState('')
+function TarefasLista() {
+  const [tarefas, setTarefas] = useState([])
 
-  // Ao abrir a tela, busca as tarefas na API (consulta)
   useEffect(() => {
-    let cancelado = false // ignora a resposta se a tela já foi fechada
-    listar('tarefas')
-      .then((dados) => {
-        if (!cancelado) setTarefas(dados)
-      })
-      .catch((e) => {
-        if (!cancelado) setErro(e.message)
-      })
-    return () => {
-      cancelado = true
-    }
+    fetch('/api/tarefas')
+      .then((res) => res.json())
+      .then((dados) => setTarefas(dados))
   }, [])
 
-  async function excluirTarefa(tarefa) {
-    if (!window.confirm(`Excluir a tarefa "${tarefa.titulo}"?`)) return
-    try {
-      await excluir('tarefas', tarefa.id)
-      // Tira a tarefa da lista na tela, sem precisar buscar tudo de novo
-      setTarefas(tarefas.filter((t) => t.id !== tarefa.id))
-    } catch (e) {
-      setErro(e.message)
-    }
+  function excluir(id) {
+    if (!confirm('Deseja excluir esta tarefa?')) return
+
+    fetch('/api/tarefas/' + id, { method: 'DELETE' }).then((res) => {
+      if (res.ok) {
+        setTarefas(tarefas.filter((t) => t.id !== id))
+      } else {
+        alert('Erro ao excluir')
+      }
+    })
   }
 
   return (
-    <>
+    <div>
       <h1>Tarefas</h1>
       <Link to="/tarefas/novo">+ Nova tarefa</Link>
 
-      {erro && <p className="erro">{erro}</p>}
-      {tarefas === null && !erro && <p>Carregando...</p>}
-      {tarefas && tarefas.length === 0 && <p>Nenhuma tarefa cadastrada.</p>}
-
-      {tarefas && tarefas.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Status</th>
-              <th>Prioridade</th>
-              <th>Data limite</th>
-              <th>Ações</th>
+      <table>
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Status</th>
+            <th>Prioridade</th>
+            <th>Data limite</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tarefas.map((t) => (
+            <tr key={t.id}>
+              <td>{t.titulo}</td>
+              <td>{t.status}</td>
+              <td>{t.prioridade}</td>
+              <td>{t.dataLimite}</td>
+              <td>
+                <Link to={'/tarefas/' + t.id + '/editar'}>Editar</Link>{' '}
+                <button onClick={() => excluir(t.id)}>Excluir</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {tarefas.map((tarefa) => (
-              <tr key={tarefa.id}>
-                <td>{tarefa.titulo}</td>
-                <td>{tarefa.status}</td>
-                <td>{tarefa.prioridade}</td>
-                <td>{tarefa.dataLimite}</td>
-                <td>
-                  <Link to={`/tarefas/${tarefa.id}/editar`}>Editar</Link>{' '}
-                  <button onClick={() => excluirTarefa(tarefa)}>Excluir</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
+
+export default TarefasLista

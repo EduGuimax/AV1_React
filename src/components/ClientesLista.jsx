@@ -1,75 +1,61 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listar, excluir } from '../api'
 
-export default function ClientesLista() {
-  const [clientes, setClientes] = useState(null) // null = ainda carregando
-  const [erro, setErro] = useState('')
+function ClientesLista() {
+  const [clientes, setClientes] = useState([])
 
-  // Ao abrir a tela, busca os clientes na API (consulta)
   useEffect(() => {
-    let cancelado = false // ignora a resposta se a tela já foi fechada
-    listar('clientes')
-      .then((dados) => {
-        if (!cancelado) setClientes(dados)
-      })
-      .catch((e) => {
-        if (!cancelado) setErro(e.message)
-      })
-    return () => {
-      cancelado = true
-    }
+    fetch('/api/clientes')
+      .then((res) => res.json())
+      .then((dados) => setClientes(dados))
   }, [])
 
-  async function excluirCliente(cliente) {
-    if (!window.confirm(`Excluir o cliente "${cliente.nome}"?`)) return
-    try {
-      await excluir('clientes', cliente.id)
-      // Tira o cliente da lista na tela, sem precisar buscar tudo de novo
-      setClientes(clientes.filter((c) => c.id !== cliente.id))
-    } catch (e) {
-      setErro(e.message)
-    }
+  function excluir(id) {
+    if (!confirm('Deseja excluir este cliente?')) return
+
+    fetch('/api/clientes/' + id, { method: 'DELETE' }).then((res) => {
+      if (res.ok) {
+        setClientes(clientes.filter((c) => c.id !== id))
+      } else {
+        alert('Erro ao excluir')
+      }
+    })
   }
 
   return (
-    <>
+    <div>
       <h1>Clientes</h1>
       <Link to="/clientes/novo">+ Novo cliente</Link>
 
-      {erro && <p className="erro">{erro}</p>}
-      {clientes === null && !erro && <p>Carregando...</p>}
-      {clientes && clientes.length === 0 && <p>Nenhum cliente cadastrado.</p>}
-
-      {clientes && clientes.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>E-mail</th>
-              <th>Telefone</th>
-              <th>Cidade</th>
-              <th>Estado</th>
-              <th>Ações</th>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th>Estado</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {clientes.map((c) => (
+            <tr key={c.id}>
+              <td>{c.nome}</td>
+              <td>{c.email}</td>
+              <td>{c.telefone}</td>
+              <td>{c.cidade}</td>
+              <td>{c.estado}</td>
+              <td>
+                <Link to={'/clientes/' + c.id + '/editar'}>Editar</Link>{' '}
+                <button onClick={() => excluir(c.id)}>Excluir</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {clientes.map((cliente) => (
-              <tr key={cliente.id}>
-                <td>{cliente.nome}</td>
-                <td>{cliente.email}</td>
-                <td>{cliente.telefone}</td>
-                <td>{cliente.cidade}</td>
-                <td>{cliente.estado}</td>
-                <td>
-                  <Link to={`/clientes/${cliente.id}/editar`}>Editar</Link>{' '}
-                  <button onClick={() => excluirCliente(cliente)}>Excluir</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
+
+export default ClientesLista

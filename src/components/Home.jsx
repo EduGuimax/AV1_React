@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 
-export default function Home() {
+function Home() {
   return (
-    <>
+    <div>
       <h1>CRUD com React</h1>
       <p>Escolha um cadastro:</p>
       <ul>
@@ -10,6 +10,8 @@ export default function Home() {
         <li><Link to="/clientes">Clientes</Link></li>
         <li><Link to="/tarefas">Tarefas</Link></li>
       </ul>
-    </>
+    </div>
   )
 }
+
+export default Home

@@ -1,95 +1,111 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { atualizar, buscar, criar } from '../api'
-import { paraApi, paraFormulario } from '../formulario'
-import Campo from './Campo'
 
-// Valores iniciais de uma tarefa nova
-const tarefaVazia = {
-  titulo: '',
-  descricao: '',
-  status: 'pendente',
-  prioridade: 'media',
-  dataLimite: '',
-}
-
-// Serve para as duas telas: /tarefas/novo (cadastro) e /tarefas/:id/editar (atualização)
-export default function TarefaForm() {
-  const { id } = useParams() // só existe na edição
+function TarefaForm() {
+  const { id } = useParams()
   const navigate = useNavigate()
-  const [tarefa, setTarefa] = useState(tarefaVazia)
+
+  const [tarefa, setTarefa] = useState({
+    titulo: '',
+    descricao: '',
+    status: 'pendente',
+    prioridade: 'media',
+    dataLimite: '',
+  })
   const [erro, setErro] = useState('')
 
-  // Na edição, busca a tarefa na API e preenche o formulário
+  // se tem id na url é edição, então busca a tarefa pra preencher o formulário
   useEffect(() => {
-    if (!id) return
-    // "cancelado" evita que uma resposta atrasada apague o que o usuário já digitou
-    let cancelado = false
-    buscar('tarefas', id)
-      .then((dados) => {
-        if (!cancelado) setTarefa(paraFormulario(dados, tarefaVazia))
-      })
-      .catch((e) => {
-        if (!cancelado) setErro(e.message)
-      })
-    return () => {
-      cancelado = true
+    if (id) {
+      fetch('/api/tarefas/' + id)
+        .then((res) => res.json())
+        .then((dados) => {
+          // a API manda null nos campos vazios e o input não aceita null
+          for (const campo in dados) {
+            if (dados[campo] === null) dados[campo] = ''
+          }
+          setTarefa(dados)
+        })
     }
   }, [id])
 
-  // Chamada a cada digitação: atualiza só o campo que mudou
-  function mudar(evento) {
-    setTarefa({ ...tarefa, [evento.target.name]: evento.target.value })
+  function mudar(e) {
+    setTarefa({ ...tarefa, [e.target.name]: e.target.value })
   }
 
-  async function salvar(evento) {
-    evento.preventDefault() // impede o navegador de recarregar a página
-    setErro('')
-    try {
-      const dados = paraApi(tarefa)
-      if (id) {
-        await atualizar('tarefas', id, dados)
-      } else {
-        await criar('tarefas', dados)
-      }
-      navigate('/tarefas') // volta para a lista
-    } catch (e) {
-      setErro(e.message)
+  async function salvar(e) {
+    e.preventDefault()
+
+    const dados = {
+      titulo: tarefa.titulo,
+      descricao: tarefa.descricao,
+      status: tarefa.status,
+      prioridade: tarefa.prioridade,
+    }
+    // a API não aceita data vazia, então só manda se preencheu
+    if (tarefa.dataLimite !== '') dados.dataLimite = tarefa.dataLimite
+
+    let url = '/api/tarefas'
+    let metodo = 'POST'
+    if (id) {
+      url = url + '/' + id
+      metodo = 'PUT'
+    }
+
+    const res = await fetch(url, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    })
+
+    if (res.ok) {
+      navigate('/tarefas')
+    } else {
+      const corpo = await res.json()
+      setErro(corpo.erros ? corpo.erros.join(', ') : corpo.erro)
     }
   }
 
   return (
-    <>
+    <div>
       <h1>{id ? 'Editar tarefa' : 'Nova tarefa'}</h1>
 
       <form onSubmit={salvar}>
-        <Campo label="Título" nome="titulo" valor={tarefa.titulo} aoMudar={mudar} obrigatorio />
-        <Campo label="Descrição" nome="descricao" valor={tarefa.descricao} aoMudar={mudar} />
-
         <div className="campo">
-          <label htmlFor="status">Status</label>
-          <select id="status" name="status" value={tarefa.status} onChange={mudar}>
+          <label>Título *</label>
+          <input name="titulo" value={tarefa.titulo} onChange={mudar} required />
+        </div>
+        <div className="campo">
+          <label>Descrição</label>
+          <input name="descricao" value={tarefa.descricao} onChange={mudar} />
+        </div>
+        <div className="campo">
+          <label>Status</label>
+          <select name="status" value={tarefa.status} onChange={mudar}>
             <option value="pendente">Pendente</option>
             <option value="em_andamento">Em andamento</option>
             <option value="concluida">Concluída</option>
           </select>
         </div>
-
         <div className="campo">
-          <label htmlFor="prioridade">Prioridade</label>
-          <select id="prioridade" name="prioridade" value={tarefa.prioridade} onChange={mudar}>
+          <label>Prioridade</label>
+          <select name="prioridade" value={tarefa.prioridade} onChange={mudar}>
             <option value="baixa">Baixa</option>
             <option value="media">Média</option>
             <option value="alta">Alta</option>
           </select>
         </div>
-
-        <Campo label="Data limite" nome="dataLimite" tipo="date" valor={tarefa.dataLimite} aoMudar={mudar} />
+        <div className="campo">
+          <label>Data limite</label>
+          <input name="dataLimite" type="date" value={tarefa.dataLimite} onChange={mudar} />
+        </div>
 
         {erro && <p className="erro">{erro}</p>}
 
         <button type="submit">Salvar</button> <Link to="/tarefas">Cancelar</Link>
       </form>
-    </>
+    </div>
   )
 }
+
+export default TarefaForm
